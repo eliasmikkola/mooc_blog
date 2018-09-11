@@ -44,6 +44,9 @@ describe('GET api tests', () => {
         expect(contents).toContain('Go To Statement Considered Harmful')
     })
 })
+
+
+
 describe('POST api tests', () => {
 
     test('a valid blog post can be added ', async () => {
@@ -127,6 +130,27 @@ describe('POST api tests', () => {
     })
 })
 
+describe('DELETE api tests', () => {
+
+    test('delete single blog', async () => {
+    const blogsBefore = await blogsInDb()
+    
+    const blogToDelete = blogsBefore.body[0]
+    
+    const idToDelete = blogToDelete['_id']
+    const titleToRemove = blogToDelete['title']
+    
+    await api
+        .delete(`/api/blogs/${idToDelete}`)
+        .expect(204)
+
+    const blogsAfter = await blogsInDb()
+    expect(blogsAfter.body.length).toBe(blogsBefore.body.length - 1)
+
+    expect(blogsAfter.body.map(n=>n.title)).not.toContain(titleToRemove)
+
+    })
+})
 
 afterAll(() => {
   server.close()
