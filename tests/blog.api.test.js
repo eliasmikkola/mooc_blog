@@ -38,6 +38,32 @@ test('a specific blog is within the returned notes', async () => {
 })
 
 
+test('a valid blog post can be added ', async () => {
+    const newBlog = {
+        _id: "5a422b3a1b54a67623420984",
+        title: "Cats in Computer Science",
+        author: "Cat Stevens",
+        url: "https://http.cat/",
+        likes: 11,
+        __v: 0
+      }
+  
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+  
+    const response = await api
+      .get('/api/blogs')
+  
+    const contents = response.body.map(r => r.title)
+  
+    expect(response.body.length).toBe(testData.length + 1)
+    expect(contents).toContain(newBlog.title)
+  })
+
+
 afterAll(() => {
   server.close()
 })
