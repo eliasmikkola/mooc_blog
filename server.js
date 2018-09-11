@@ -5,40 +5,31 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const mongoose = require('mongoose')
 
-const Blog = mongoose.model('Blog', {
-  title: String,
-  author: String,
-  url: String,
-  likes: Number
-})
+const blogRouter = require('./routes/blogs')
 
-module.exports = Blog
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config()
+}
+
+const mongoUrl = process.env.MONGO_DB_URL
+
+mongoose
+  .connect(mongoUrl, {
+    useNewUrlParser: true
+  })
+  .then( () => {
+    console.log('connected to database', mongoUrl)
+  })
+  .catch( err => {
+    console.log(err)
+  })
 
 app.use(cors())
 app.use(bodyParser.json())
 
-const mongoUrl = 'mongodb://eliasdsdf:salasana12345@ds151892.mlab.com:51892/blogi'
-mongoose.connect(mongoUrl, {
-  useNewUrlParser: true
-})
 
-app.get('/api/blogs', (request, response) => {
-  Blog
-    .find({})
-    .then(blogs => {
-      response.json(blogs)
-    })
-})
-
-app.post('/api/blogs', (request, response) => {
-  const blog = new Blog(request.body)
-
-  blog
-    .save()
-    .then(result => {
-      response.status(201).json(result)
-    })
-})
+app.use('/api/blogs', blogRouter)
+ 
 
 const PORT = 3003
 app.listen(PORT, () => {
