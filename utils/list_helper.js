@@ -34,9 +34,40 @@ const favouriteBlog = (blogs) => {
     }
 }
 
+const mostLikes = (blogs) => {
+    const names = blogs.map( n => n.author )
+    //get names
+    const uniqueNames = names.filter( (item, pos) => {
+        return names.indexOf(item) == pos;
+    })
+    //map unique names to objects, containing the name field and array of blogs with that author name
+    const authors = uniqueNames.map(name => {
+        return {
+            name: name,
+            blogs: blogs.filter( blog => blog.author === name)
+        }
+    })
+    //map names and blogs by author to name and likes for every blog 
+    const sortedByLikes = authors.map(author => {
+        return {
+            author: author.name,
+            likes: author.blogs.reduce((prev, curr) => {
+                return prev.likes + curr.likes
+            })
+
+        }
+    })
+    //and sort by total likes
+    .sort((a,b) => b.likes - a.likes)[0]
+    //pick only wanted properties
+    var {author, likes} = sortedByLikes
+    return {author, likes}
+}
+
 module.exports = {
     dummy,
     totalLikes,
     mostBlogs,
-    favouriteBlog
+    favouriteBlog,
+    mostLikes
 }
