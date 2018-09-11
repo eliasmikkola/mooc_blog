@@ -13,10 +13,12 @@ blogRouter.post('/', async (request, response) => {
     if(!blogToSave.likes){
         blogToSave['likes'] = 0
     }
-    const blog = new Blog(blogToSave)
-    
-    const res = await blog.save()
-    response.status(201).json(res)
+    if(!blogToSave.url || !blogToSave.title) response.status(400).json({ error: 'fields missing' })
+    else {
+        const blog = new Blog(blogToSave)
+        const res = await blog.save()
+        response.status(201).json(res)
+    }
 })
 
 module.exports = blogRouter

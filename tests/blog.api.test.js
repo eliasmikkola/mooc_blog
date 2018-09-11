@@ -86,6 +86,40 @@ test('if property "likes" has no value, should be assigned a value of 0', async 
 })
 
 
+test('POSTs missing properties "title" and "url" should return 400', async () => {
+    const newBlogWithoutUrl= {
+        title: 'Dogs in Computer Science',
+        author: 'Dog Stevens',
+        __v: 0
+    }
+    const newBlogWithoutTitle= {
+        url: 'https://http.cat',
+        author: 'Dog Stevens',
+        __v: 0
+    }
+  
+    await api
+      .post('/api/blogs')
+      .send(newBlogWithoutTitle)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+
+    await api
+      .post('/api/blogs')
+      .send(newBlogWithoutUrl)
+      .expect(400)
+      .expect('Content-Type', /application\/json/)
+  
+    const response = await api
+      .get('/api/blogs')
+  
+    const contents = response.body.map(r => r.title)
+    const lastElement = response.body[response.body.length - 1]
+
+    expect(lastElement.likes).toBe(0)
+})
+
+
 afterAll(() => {
   server.close()
 })
