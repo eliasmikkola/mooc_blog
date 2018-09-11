@@ -24,6 +24,7 @@ beforeAll(async () => {
 describe('GET api tests', () => {
 
     test('blogs are returned as json', async () => {
+    const blogsBefore = await blogsInDb()
     await api
         .get('/api/blogs')
         .expect(200)
@@ -53,18 +54,20 @@ describe('POST api tests', () => {
             likes: 11,
             __v: 0
         }
-    
+        
+        const blogsBefore = await blogsInDb()
+
         await api
-        .post('/api/blogs')
-        .send(newBlog)
-        .expect(201)
-        .expect('Content-Type', /application\/json/)
+            .post('/api/blogs')
+            .send(newBlog)
+            .expect(201)
+            .expect('Content-Type', /application\/json/)
     
-        const response = await blogsInDb()
+        const blogsAfter = await blogsInDb()
+        
+        const contents = blogsAfter.body.map(r => r.title)
     
-        const contents = response.body.map(r => r.title)
-    
-        expect(response.body.length).toBe(testData.length + 1)
+        expect(blogsAfter.body.length).toBe(blogsBefore.body.length + 1)
         expect(contents).toContain(newBlog.title)
     })
 
@@ -77,10 +80,10 @@ describe('POST api tests', () => {
         }
     
         await api
-        .post('/api/blogs')
-        .send(newBlogWithoutLikes)
-        .expect(201)
-        .expect('Content-Type', /application\/json/)
+            .post('/api/blogs')
+            .send(newBlogWithoutLikes)
+            .expect(201)
+            .expect('Content-Type', /application\/json/)
     
         const response = await blogsInDb()
     
