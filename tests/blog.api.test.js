@@ -40,7 +40,6 @@ test('a specific blog is within the returned notes', async () => {
 
 test('a valid blog post can be added ', async () => {
     const newBlog = {
-        _id: "5a422b3a1b54a67623420984",
         title: "Cats in Computer Science",
         author: "Cat Stevens",
         url: "https://http.cat/",
@@ -61,7 +60,30 @@ test('a valid blog post can be added ', async () => {
   
     expect(response.body.length).toBe(testData.length + 1)
     expect(contents).toContain(newBlog.title)
-  })
+})
+
+test('if property "likes" has no value, should be assigned a value of 0', async () => {
+    const newBlogWithoutLikes= {
+        title: "Dogs in Computer Science",
+        author: "DOg Stevens",
+        url: "https://http.cat/",
+        __v: 0
+      }
+  
+    await api
+      .post('/api/blogs')
+      .send(newBlogWithoutLikes)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+  
+    const response = await api
+      .get('/api/blogs')
+  
+    const contents = response.body.map(r => r.title)
+    const lastElement = response.body[response.body.length - 1]
+
+    expect(lastElement.likes).toBe(0)
+})
 
 
 afterAll(() => {
