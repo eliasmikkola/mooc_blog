@@ -157,14 +157,13 @@ describe('PUT api tests', () => {
     test('update single blog', async () => {
     
         const blogsBefore = await blogsInDb()
-        console.log(blogsBefore.body);
         var blogToUpdate = blogsBefore.body[0]
         
         const idToUpdate = blogToUpdate['_id']
         const titleBeforeUpdate = blogToUpdate['title']
 
         blogToUpdate['title'] = 'New Updated Title'
-
+        console.log("HERE", blogToUpdate.title)
         await api
             .put(`/api/blogs/${idToUpdate}`)
             .send(blogToUpdate)
@@ -173,34 +172,11 @@ describe('PUT api tests', () => {
         const blogsAfter = await blogsInDb()
 
         expect(blogsAfter.body.length).toBe(blogsBefore.body.length)
-        const titles = blogsAfter.body.map(n=>n.tilte)
+        const titles = blogsAfter.body.map(n=>n.title)
+        
+        expect(titles).toContain('New Updated Title')
+        
         expect(titles).not.toContain(titleBeforeUpdate)
-        expect(titles).not.toContain('New Updated Title')
-
-    })
-    test('try to update blog with non-existing id', async () => {
-    
-        const blogsBefore = await blogsInDb()
-        const wrongId = 'asd123dfg456'
-        const updatedBlog = {
-            author: 'Spede Pasanen',
-            title: 'blogien blogi',
-            url: 'urlijonnekin',
-            likes: 100
-        }
-        await api
-            .put(`/api/blogs/123092131293/`)
-            .send(updatedBlog)
-            .expect(400)
-
-        const blogsAfter = await blogsInDb()
-        // console.log(blogsAfter.body);
-        expect(blogsAfter.body.length).toBe(blogsBefore.body.length)
-        
-        blogsBefore.body.forEach((n, index) => {
-            expect(blogsAfter.body[index]).toEqual(n)
-        })
-        
 
     })
 })
