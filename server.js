@@ -5,6 +5,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const mongoose = require('mongoose')
 const blogRouter = require('./routes/blogs')
+const userRouter = require('./routes/users')
 const config = require('./utils/config')
 
 const testing = process.env.NODE_ENV === 'test'
@@ -13,7 +14,7 @@ if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config()
 }
 const mongoUrl = config.mongoUrl
-console.log("config", config)
+
 mongoose
   .connect(mongoUrl, {
     useNewUrlParser: true
@@ -30,6 +31,7 @@ app.use(bodyParser.json())
 
 
 app.use('/api/blogs', blogRouter)
+app.use('/api/users', userRouter)
  
 
 const PORT = config.port
