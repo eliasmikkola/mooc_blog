@@ -4,8 +4,13 @@ const app = express()
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const mongoose = require('mongoose')
+
+//routers
 const blogRouter = require('./routes/blogs')
 const userRouter = require('./routes/users')
+const loginRouter = require('./routes/login')
+
+
 const config = require('./utils/config')
 const middleware = require('./utils/middleware')
 
@@ -34,6 +39,7 @@ app.use(middleware.logger)
 
 app.use('/api/blogs', blogRouter)
 app.use('/api/users', userRouter)
+app.use('/api/login', loginRouter)
 
 app.use(middleware.error)
 
