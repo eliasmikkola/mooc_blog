@@ -1,6 +1,8 @@
 const blogRouter = require('express').Router()
 const Blog = require('../models/blog')
 const User = require('../models/user')
+const jwt = require('jsonwebtoken')
+
 
 
 blogRouter.get('/', async(request, response) => {
@@ -15,26 +17,42 @@ blogRouter.post('/', async (request, response) => {
     if(!blogToSave.likes){
         blogToSave['likes'] = 0
     }
-    if(!blogToSave.url || !blogToSave.title) response.status(400).json({ error: 'fields missing' })
-    else {
-        const users = await User.find({})
-        
-        if(users.length > 0){
-            blogToSave['user'] = users[0]._id
+    try {
+        const token = request.token
+        const decodedToken = token === null ? false : jwt.verify(token, process.env.SECRET)
+    
+        if (!token || !decodedToken.id) {
+            return response.status(401).json({ error: 'token missing or invalid' })
         }
-        
-        
+    
+        const user = await User.findById(decodedToken.id)
 
-        const blog = new Blog(blogToSave)
-        const savedBlog = await blog.save()
+        if(!blogToSave.url || !blogToSave.title) response.status(400).json({ error: 'fields missing' })
+        else {
+            const users = await User.find({})
+            
+            if(users.length > 0){
+                blogToSave['user'] = users[0]._id
+            }
+            
+            
 
-        if(users.length > 0){
-            const user = users[0]
-            user.blogs = user.blogs.concat(savedBlog._id)
-            await user.save()
+            const blog = new Blog(blogToSave)
+            const savedBlog = await blog.save()
+
+            if(users.length > 0){
+                const user = users[0]
+                user.blogs = user.blogs.concat(savedBlog._id)
+                await user.save()
+            }
+
+            response.status(201).json(savedBlog)
+            
         }
+    } catch (e) {
+        console.log(e)
+        response.status(500).json({ error: 'something went wrong...' })
 
-        response.status(201).json(savedBlog)
     }
 })
 

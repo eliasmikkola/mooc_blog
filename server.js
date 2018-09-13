@@ -36,6 +36,7 @@ app.use(cors())
 app.use(bodyParser.json())
 
 app.use(middleware.logger)
+app.use(middleware.tokenExtractor)
 
 app.use('/api/blogs', blogRouter)
 app.use('/api/users', userRouter)
