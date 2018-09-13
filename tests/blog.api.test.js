@@ -2,8 +2,14 @@ const supertest = require('supertest')
 const { app, server } = require('../server')
 const api = supertest(app)
 const testData = require('../utils/blog-list')
-
+const bcrypt = require('bcrypt')
 const Blog = require('../models/blog')
+const User = require('../models/user')
+
+
+
+var user1authToken = ""
+var user2authToken = ""
 
 const blogsInDb = async () => {
     const blogs = await api
@@ -11,41 +17,58 @@ const blogsInDb = async () => {
     return blogs
 }
 
+
 beforeAll(async () => {
+
+
+    const saltRounds = 10
+    const hashedPassWord = await bcrypt.hash("password1", saltRounds)
+
+    const user1 = new User({
+        "name": "Tester testerr",
+        "passwordHash": hashedPassWord,
+        "username": "testuser123",
+        "adult": true
+    })
+
+    const user2 = new User({
+        "name": "Tester testerr",
+        "passwordHash": hashedPassWord,
+        "username": "testuser1234",
+        "adult": false
+    })
+
+
+
+
     await Blog.remove({})
+    await User.remove({})
+
+    const user1response = await user1.save()
+    await user2.save()
+
+    const loginResp1 = await api
+        .post('/api/login')
+        .send({
+            username: "testuser123",
+            password: "password1"
+        })
+    user1authToken = loginResp1.body.token
+
+    const loginResp2 = await api
+        .post('/api/login')
+        .send({
+            username: "testuser1234",
+            password: "password1"
+        })
+    user2authToken = loginResp2.body.token
     
     await testData.forEach(n => {
+        n["user"] = user1response._id
         let blogObject = new Blog(n)
-        blogObject.save()    
+        blogObject.save()
     })
 })
-
-
-describe('GET api tests', () => {
-
-    test('blogs are returned as json', async () => {
-    const blogsBefore = await blogsInDb()
-    await api
-        .get('/api/blogs')
-        .expect(200)
-        .expect('Content-Type', /application\/json/)
-    })
-
-    test('all blogs are returned', async () => {
-        const response = await blogsInDb()
-        expect(response.body.length).toBe(testData.length)
-    })
-
-    test('a specific blog is within the returned blogs', async () => {
-        const response = await blogsInDb()
-    
-        const contents = response.body.map(r => r.title)
-    
-        expect(contents).toContain('Go To Statement Considered Harmful')
-    })
-})
-
-
 
 describe('POST api tests', () => {
 
@@ -59,9 +82,10 @@ describe('POST api tests', () => {
         }
         
         const blogsBefore = await blogsInDb()
-
+        
         await api
             .post('/api/blogs')
+            .set({'Authorization': `Bearer ${user1authToken}`})
             .send(newBlog)
             .expect(201)
             .expect('Content-Type', /application\/json/)
@@ -81,9 +105,11 @@ describe('POST api tests', () => {
             url: "https://http.cat/",
             __v: 0
         }
-    
+
+        
         await api
             .post('/api/blogs')
+            .set({'Authorization': `Bearer ${user1authToken}`})
             .send(newBlogWithoutLikes)
             .expect(201)
             .expect('Content-Type', /application\/json/)
@@ -108,18 +134,20 @@ describe('POST api tests', () => {
             author: 'Dog Stevens',
             __v: 0
         }
-    
+        
         await api
-        .post('/api/blogs')
-        .send(newBlogWithoutTitle)
-        .expect(400)
-        .expect('Content-Type', /application\/json/)
+            .post('/api/blogs')
+            .set({'Authorization': `Bearer ${user1authToken}`})
+            .send(newBlogWithoutTitle)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
 
         await api
-        .post('/api/blogs')
-        .send(newBlogWithoutUrl)
-        .expect(400)
-        .expect('Content-Type', /application\/json/)
+            .post('/api/blogs')
+            .send(newBlogWithoutUrl)
+            .set({'Authorization': `Bearer ${user1authToken}`})
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
     
         const response = await blogsInDb()
     
@@ -128,26 +156,90 @@ describe('POST api tests', () => {
 
         expect(lastElement.likes).toBe(0)
     })
+
+    test('post without token should return status 401 ', async () => {
+        const newBlog = {
+            title: "Cats in Computer Science",
+            author: "Cat Stevens",
+            url: "https://http.cat/",
+            likes: 11,
+            __v: 0
+        }
+        
+        const blogsBefore = await blogsInDb()
+
+        await api
+            .post('/api/blogs')
+            .send(newBlog)
+            .expect(401)
+            .expect('Content-Type', /application\/json/)
+    
+        const blogsAfter = await blogsInDb()
+        
+    
+        expect(blogsAfter.body.length).toBe(blogsBefore.body.length)
+    })
+})
+
+describe('GET api tests', () => {
+
+    test('blogs are returned as json', async () => {
+    const blogsBefore = await blogsInDb()
+    await api
+        .get('/api/blogs')
+        .expect(200)
+        .expect('Content-Type', /application\/json/)
+    })
+
+
+    test('a specific blog is within the returned blogs', async () => {
+        const response = await blogsInDb()
+    
+        const contents = response.body.map(r => r.title)
+    
+        expect(contents).toContain('Go To Statement Considered Harmful')
+    })
 })
 
 describe('DELETE api tests', () => {
 
-    test('delete single blog', async () => {
+    test('should be able to delete own blogs', async () => {
         const blogsBefore = await blogsInDb()
         
         const blogToDelete = blogsBefore.body[0]
-        console.log(blogToDelete)
+        const idToDelete = blogToDelete['id']
+        const titleToRemove = blogToDelete['title']
+        
+        const answer = await api
+            .delete(`/api/blogs/${idToDelete}`)
+            .set({'Authorization': `Bearer ${user1authToken}`})
+            .expect(204)
+            
+        const blogsAfter = await blogsInDb()
+        expect(blogsAfter.body.length).toBe(blogsBefore.body.length - 1)
+        expect(blogsAfter.body.map(n=>n.title)).not.toContain(titleToRemove)
+
+    })
+
+    test('should not be able to delete other\'s blogs', async () => {
+        const blogsBefore = await blogsInDb()
+        
+        
+
+        const blogToDelete = blogsBefore.body[0]
         const idToDelete = blogToDelete['id']
         const titleToRemove = blogToDelete['title']
         
         await api
             .delete(`/api/blogs/${idToDelete}`)
-            .expect(204)
+            .set({'Authorization': `Bearer ${user2authToken}`})
+            .send()
+            .expect(403)
 
         const blogsAfter = await blogsInDb()
-        expect(blogsAfter.body.length).toBe(blogsBefore.body.length - 1)
+        expect(blogsAfter.body.length).toBe(blogsBefore.body.length)
 
-        expect(blogsAfter.body.map(n=>n.title)).not.toContain(titleToRemove)
+        expect(blogsAfter.body.map(n=>n.title)).toContain(titleToRemove)
 
     })
 })
@@ -157,7 +249,6 @@ describe('PUT api tests', () => {
     test('update single blog', async () => {
     
         const blogsBefore = await blogsInDb()
-        console.log("VLOGS BEFOR",blogsBefore.body);
         var blogToUpdate = blogsBefore.body[0]
         
         const idToUpdate = blogToUpdate['id']

@@ -21,7 +21,7 @@ beforeAll(async () => {
 })
 
 
-describe.only('/api/users POST tests', () => {
+describe('/api/users POST tests', () => {
 
     test('user with password < 3 characters should return 400', async () => {
         const usersBefore = await usersInDb()
@@ -72,7 +72,7 @@ describe.only('/api/users POST tests', () => {
     })
 })
 
-describe.only('/api/users GET tests', () => {
+describe('/api/users GET tests', () => {
 
     test('user with password < 3 characters should return 400', async () => {
         const usersBefore = await usersInDb()

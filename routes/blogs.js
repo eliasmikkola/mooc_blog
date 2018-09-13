@@ -28,26 +28,22 @@ blogRouter.post('/', async (request, response) => {
         const user = await User.findById(decodedToken.id)
 
         if(!blogToSave.url || !blogToSave.title) response.status(400).json({ error: 'fields missing' })
-        else {
-            const users = await User.find({})
-            
-            if(users.length > 0){
-                blogToSave['user'] = users[0]._id
-            }
-            
-            
-
-            const blog = new Blog(blogToSave)
-            const savedBlog = await blog.save()
-
-            if(users.length > 0){
-                const user = users[0]
+        else {            
+            if(user !== null){
+                blogToSave['user'] = user._id
+                const blog = new Blog(blogToSave)
+                
+                const savedBlog = await blog.save()
+                
                 user.blogs = user.blogs.concat(savedBlog._id)
                 await user.save()
-            }
+                
 
-            response.status(201).json(savedBlog)
-            
+                response.status(201).json(savedBlog)
+            }
+            else {
+                response.status(500).json({ error: 'something went wrong...' })
+            }
         }
     } catch (e) {
         console.log(e)
@@ -69,9 +65,10 @@ blogRouter.delete('/:id', async (request, response) => {
     }
 
     const user = await User.findById(decodedToken.id)
-    if(blog.user.toString() !== user.id.toString()){
+    if(blog.user.toString() !== user._id.toString()){
         return response.status(403).json({ error: 'no permission to do that' })
     }
+    await Blog.findByIdAndRemove(id)
     response.status(204).send()
     
 
