@@ -136,8 +136,8 @@ describe('DELETE api tests', () => {
         const blogsBefore = await blogsInDb()
         
         const blogToDelete = blogsBefore.body[0]
-        
-        const idToDelete = blogToDelete['_id']
+        console.log(blogToDelete)
+        const idToDelete = blogToDelete['id']
         const titleToRemove = blogToDelete['title']
         
         await api
@@ -157,13 +157,13 @@ describe('PUT api tests', () => {
     test('update single blog', async () => {
     
         const blogsBefore = await blogsInDb()
+        console.log("VLOGS BEFOR",blogsBefore.body);
         var blogToUpdate = blogsBefore.body[0]
         
-        const idToUpdate = blogToUpdate['_id']
+        const idToUpdate = blogToUpdate['id']
         const titleBeforeUpdate = blogToUpdate['title']
 
         blogToUpdate['title'] = 'New Updated Title'
-        console.log("HERE", blogToUpdate.title)
         await api
             .put(`/api/blogs/${idToUpdate}`)
             .send(blogToUpdate)

@@ -7,6 +7,7 @@ const mongoose = require('mongoose')
 const blogRouter = require('./routes/blogs')
 const userRouter = require('./routes/users')
 const config = require('./utils/config')
+const middleware = require('./utils/middleware')
 
 const testing = process.env.NODE_ENV === 'test'
 
@@ -29,10 +30,12 @@ mongoose
 app.use(cors())
 app.use(bodyParser.json())
 
+app.use(middleware.logger)
 
 app.use('/api/blogs', blogRouter)
 app.use('/api/users', userRouter)
- 
+
+app.use(middleware.error)
 
 const PORT = config.port
 const server = http.createServer(app)

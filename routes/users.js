@@ -30,9 +30,17 @@ usersRouter.post('/', async (request, response) => {
   }
 })
 
+usersRouter.delete('/:id', async (request, response) => {
+    const id = request.params.id
+    const deleteRes = await User.findByIdAndRemove(id)
+    response.status(204).send()
+})
+
 usersRouter.get('/', async (request, response) => {
     try {
-      const allUsers = await User.find({})
+      const allUsers = await User
+        .find({})
+        .populate('blogs')
       response.json(allUsers.map(User.format))
     } catch (exception) {
       console.log(exception)

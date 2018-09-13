@@ -88,9 +88,6 @@ describe.only('/api/users GET tests', () => {
     })
 })
 
-
-
-
 afterAll(() => {
   server.close()
 })
