@@ -19,7 +19,7 @@ blogRouter.post('/', async (request, response) => {
     }
     try {
         const token = request.token
-        const decodedToken = token === null ? false : jwt.verify(token, process.env.SECRET)
+        const decodedToken = !token ? false : jwt.verify(token, process.env.SECRET)
     
         if (!token || !decodedToken.id) {
             return response.status(401).json({ error: 'token missing or invalid' })
@@ -58,8 +58,24 @@ blogRouter.post('/', async (request, response) => {
 
 blogRouter.delete('/:id', async (request, response) => {
     const id = request.params.id
-    const deleteRes = await Blog.findByIdAndRemove(id)
+    const blog = await Blog.findById(id)
+    
+
+    const token = request.token
+    const decodedToken = !token ? false : jwt.verify(token, process.env.SECRET)
+
+    if (!token || !decodedToken.id) {
+        return response.status(401).json({ error: 'token missing or invalid' })
+    }
+
+    const user = await User.findById(decodedToken.id)
+    if(blog.user.toString() !== user.id.toString()){
+        return response.status(403).json({ error: 'no permission to do that' })
+    }
     response.status(204).send()
+    
+
+
 })
 
 blogRouter.put('/:id', async (request, response) => {
