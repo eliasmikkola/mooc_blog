@@ -39,7 +39,7 @@ blogRouter.post('/', async (request, response) => {
                 await user.save()
                 
 
-                response.status(201).json(savedBlog)
+                response.status(201).json(Blog.format(savedBlog))
             }
             else {
                 response.status(500).json({ error: 'something went wrong...' })
