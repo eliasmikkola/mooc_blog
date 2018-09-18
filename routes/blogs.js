@@ -82,7 +82,7 @@ blogRouter.put('/:id', async (request, response) => {
     
     try {
         const user = await Blog.findByIdAndUpdate(id, newBlog, { new: true })
-        response.status(202).json(user)
+        response.status(202).json(Blog.format(user))
     } catch (exp) {
         console.log(exp);
         response.status(400).json({error: 'Malformed id'})
