@@ -65,7 +65,7 @@ blogRouter.delete('/:id', async (request, response) => {
     }
 
     const user = await User.findById(decodedToken.id)
-    if(blog.user.toString() !== user._id.toString()){
+    if(blog.user && blog.user.toString() !== user._id.toString()){
         return response.status(403).json({ error: 'no permission to do that' })
     }
     await Blog.findByIdAndRemove(id)
