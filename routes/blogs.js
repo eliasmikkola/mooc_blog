@@ -52,6 +52,21 @@ blogRouter.post('/', async (request, response) => {
     }
 })
 
+blogRouter.post('/:id/comments/', async (request, response) => {
+    const id = request.params.id
+    const newBlog = request.body
+    
+    try {
+        const user = await Blog.findByIdAndUpdate(id, newBlog, { new: true })
+        response.status(202).json(Blog.format(user))
+    } catch (exp) {
+        console.log(exp);
+        response.status(400).json({error: 'Malformed id'})
+    }
+    
+   
+})
+
 blogRouter.delete('/:id', async (request, response) => {
     const id = request.params.id
     const blog = await Blog.findById(id)
